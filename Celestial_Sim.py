@@ -11,19 +11,86 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
-def distance(Distance, theta, eccentricity):
-            e = eccentricity
-            r = (Distance*(1-e**2))/ (1 - e * np.cos(theta))    
-            return r
+# Celestial Simulator: orbit calculations and plotting support.
+# This file provides an interactive PyQt5 interface for visualizing
+# planetary orbits, orbit comparisons, animations, and central-body plots.
+
+# Orbital constants and helper functions for repeated orbit calculations
+PLANET_SEMI_MAJOR_AXIS_AU = {
+    "mercury": 0.387,
+    "venus": 0.723,
+    "earth": 1.000,
+    "mars": 1.523,
+    "jupiter": 5.20,
+    "saturn": 9.58,
+    "uranus": 19.29,
+    "neptune": 30.25,
+    "pluto": 39.51,
+}
+
+ORBITAL_ECCENTRICITIES = {
+    "mercury": 0.2056,
+    "venus": 0.0068,
+    "earth": 0.0167,
+    "mars": 0.0934,
+    "jupiter": 0.048775,
+    "saturn": 0.0555,
+    "uranus": 0.0472,
+    "neptune": 0.0086,
+    "pluto": 0.25,
+}
+
+ORBITAL_PERIODS = {
+    "mercury": 0.24,
+    "venus": 0.62,
+    "earth": 1.00,
+    "mars": 1.88,
+    "jupiter": 11.86,
+    "saturn": 29.63,
+    "uranus": 84.75,
+    "neptune": 166.34,
+    "pluto": 248.35,
+}
 
 
-def distance_task7(Distance, theta, eccentricity):
-    e = eccentricity
-    r = (Distance * (1 - e**2)) / (1 + e * np.cos(theta))
-    return r
+# Orbit coordinate generators for 2D and 3D presentations.
+# These routines convert orbital parameters into plot-ready coordinates.
+def orbital_coordinates_2d(distance, eccentricity, points=1000):
+    theta = np.radians(np.arange(points))
+    radius = orbital_radius(distance, theta, eccentricity)
+    return radius * np.cos(theta), radius * np.sin(theta)
 
 
+def orbital_coordinates_3d(distance, eccentricity, inclination_deg, points=1000):
+    theta = np.radians(np.arange(points))
+    radius = orbital_radius(distance, theta, eccentricity)
+    inclination = np.deg2rad(inclination_deg)
+    x = radius * np.cos(theta) * np.cos(inclination)
+    y = radius * np.sin(theta)
+    z = radius * np.cos(theta) * np.sin(inclination)
+    return x, y, z
 
+
+def orbital_radius(distance, theta, eccentricity, plus=False):
+    """Return the orbital radius for a conic section."""
+    sign = 1 if plus else -1
+    return (distance * (1 - eccentricity**2)) / (1 + sign * eccentricity * np.cos(theta))
+
+
+def orbital_radius_plus(distance, theta, eccentricity):
+    """Return the orbital radius for orbits using the alternate sign convention."""
+    return orbital_radius(distance, theta, eccentricity, plus=True)
+
+# Compatibility aliases for legacy code paths in the plot classes.
+# These aliases allow older plot code to keep the same function signatures.
+distance = orbital_radius
+
+def distance_plus(distance, theta, eccentricity):
+    return orbital_radius_plus(distance, theta, eccentricity)
+
+
+# Base 3D planet model used by the plotting classes.
+# Stores orbital period and time values for coordinate generation.
 class Planet3D():
     def __init__(self, period, time):
         self.period = period
@@ -31,28 +98,12 @@ class Planet3D():
 
    
 
-    def coordinates(self, Distance, eccentricity, inclination ):
-        pi = np.pi
-
-        theta = (2*pi*self.time) / self.period
-    
-        x_coordinate = []
-        y_coordinate = []
-        z_coordinate = []
-       
-        for i in range(len(self.time)):
-
-         x = distance(Distance, theta[i], eccentricity) * np.cos(theta[i]) * np.cos(inclination)
-         x_coordinate.append(x)
-       
-         y = distance(Distance, theta[i], eccentricity) * np.sin(theta[i])
-         y_coordinate.append(y)
-         
-         z = distance(Distance, theta[i], eccentricity) * np.cos(theta[i]) * np.sin(inclination)
-         z_coordinate.append(z)
-         
-       
-        
+    def coordinates(self, Distance, eccentricity, inclination):
+        theta = 2 * np.pi * np.asarray(self.time) / self.period
+        radius = orbital_radius(Distance, theta, eccentricity)
+        x_coordinate = radius * np.cos(theta) * np.cos(inclination)
+        y_coordinate = radius * np.sin(theta)
+        z_coordinate = radius * np.cos(theta) * np.sin(inclination)
         return x_coordinate, y_coordinate, z_coordinate
 
 
@@ -148,22 +199,10 @@ class Planet():
    
 
     def coordinates(self, Distance, eccentricity):
-        pi = np.pi
-
-        theta = (2*pi*self.time) / self.period
-    
-        x_coordinate = []
-        y_coordinate = []
-       
-        for i in range(len(self.time)):
-
-         x = distance(Distance, theta[i], eccentricity) * np.cos(theta[i])
-         x_coordinate.append(x)
-       
-         y = distance(Distance, theta[i], eccentricity) * np.sin(theta[i])
-         y_coordinate.append(y)
-       
-        
+        theta = 2 * np.pi * np.asarray(self.time) / self.period
+        radius = orbital_radius(Distance, theta, eccentricity)
+        x_coordinate = radius * np.cos(theta)
+        y_coordinate = radius * np.sin(theta)
         return x_coordinate, y_coordinate
         
 
@@ -245,11 +284,11 @@ class Pluto(Uranus):
     def coordinates(self, Distance, eccentricity):
         return super().coordinates(Distance, eccentricity)
         
-class PlotCanvasForTask1(FigureCanvasQTAgg):
+class KeplersThirdLawCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
-        super(PlotCanvasForTask1, self).__init__(self.fig)
+        super(KeplersThirdLawCanvas, self).__init__(self.fig)
         self.setParent(parent)
         self.plot_data()  
 
@@ -280,183 +319,61 @@ class PlotCanvasForTask1(FigureCanvasQTAgg):
         self.fig.set_facecolor((0, 0, 0, 0)) 
         self.draw()
 
-class PlotCanvasForTask2_Inner(FigureCanvasQTAgg):
+class InnerOrbitCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor((0, 0, 0, 0)) 
         self.fig.set_facecolor((0, 0, 0, 0)) 
-        super(PlotCanvasForTask2_Inner, self).__init__(self.fig)
+        super(InnerOrbitCanvas, self).__init__(self.fig)
         self.setParent(parent)
         self.plot_data()  
 
     def plot_data(self):
-        def distance(Distance, theta, eccentricity):
-            e = eccentricity
-            r = (Distance*(1-e**2))/ (1 - e * np.cos(theta))
-            return r
-        
-        def mars(Distance):
-            mars_x = []
-            mars_y = []
-            for theta in np.radians(range(0, 1000)):
-                x =  distance(Distance, theta, 0.0934) * np.cos(theta)
-                mars_x.append(x)
-           
-                y   = distance(Distance, theta, 0.0934) * np.sin(theta)
-                mars_y.append(y)
-           
-            return mars_x, mars_y
-       
-        def earth(Distance):
-            earth_x = []
-            earth_y = []
-            for theta in np.radians(range(0, 1000)):
-                x =  distance(Distance, theta, 0.0167) * np.cos(theta)
-                earth_x.append(x)
-           
-                y = distance(Distance, theta, 0.0167) * np.sin(theta)
-                earth_y.append(y)
-           
-            return earth_x, earth_y
-   
-        def mercury(Distance):
-            mercury_x = []
-            mercury_y = []
-            for theta in np.radians(range(0, 1000)):
-                x =  distance(Distance, theta, 0.2056) * np.cos(theta)
-                mercury_x.append(x)
-            
-                y = distance(Distance, theta, 0.2056) * np.sin(theta)
-                mercury_y.append(y)
-            
-            return mercury_x, mercury_y
-    
-        def venus(Distance):
-            venus_x = []
-            venus_y = []
-            for theta in np.radians(range(0, 1000)):
-                x =  distance(Distance, theta, 0.0068) * np.cos(theta)
-                venus_x.append(x)
-            
-                y = distance(Distance, theta, 0.0068) * np.sin(theta)
-                venus_y.append(y)
-            
-            return venus_x, venus_y
-            
-        self.ax.clear()  # Clear previous plot data
-        self.ax.plot(earth(1)[0], earth(1)[1], color = "blue", label = "Earth")
-        self.ax.plot(mars(1.523)[0], mars(1.523)[1], color = "red", label = "Mars")
-        self.ax.plot(venus(0.723)[0], venus(0.723)[1], color = "yellow", label = "Venus")
-        self.ax.plot(mercury(0.387)[0], mercury(0.387)[1], color = "grey", label = "Mercury")
-        self.ax.scatter(0, 0, color = "yellow", label = "Sun")
+        self.ax.clear()
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['earth'], ORBITAL_ECCENTRICITIES['earth']), color='blue', label='Earth')
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['mars'], ORBITAL_ECCENTRICITIES['mars']), color='red', label='Mars')
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['venus'], ORBITAL_ECCENTRICITIES['venus']), color='yellow', label='Venus')
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['mercury'], ORBITAL_ECCENTRICITIES['mercury']), color='grey', label='Mercury')
+        self.ax.scatter(0, 0, color='yellow', label='Sun')
         self.ax.set_xlabel(' X / AU')
         self.ax.set_ylabel(' Y / Yr')
         self.ax.legend()
         self.ax.set_aspect('equal')
-        self.ax.set_title("Inner Planets Orbit")
+        self.ax.set_title('Inner Planets Orbit')
         self.draw()
       
-class PlotCanvasForTask2_Outer(FigureCanvasQTAgg):
+class OuterOrbitCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor((0, 0, 0, 0)) 
         self.fig.set_facecolor((0, 0, 0, 0)) 
-        super(PlotCanvasForTask2_Outer, self).__init__(self.fig)
+        super(OuterOrbitCanvas, self).__init__(self.fig)
         self.setParent(parent)
         self.plot_data()
         
     def plot_data(self):
-            def distance(Distance, theta, eccentricity):
-                e = eccentricity
-                r = (Distance*(1-e**2))/ (1 - e * np.cos(theta))
-                return r
-            
-            def saturn(Distance):
-                saturn_x = []
-                saturn_y = []
-                for theta in np.radians(range(0, 1000)):
-                
-                    x =  distance(Distance, theta, 0.0555) * np.cos(theta)
-                    saturn_x.append(x)
-                
-                    y = distance(Distance, theta, 0.0555) * np.sin(theta)
-                    saturn_y.append(y)
-                
-                return saturn_x, saturn_y
-    
-            def jupiter(Distance):
-                jupiter_x = []
-                jupiter_y = []
-                for theta in np.radians(range(0, 1000)):
-                    x =  distance(Distance, theta, 0.048775) * np.cos(theta)
-                    jupiter_x.append(x)
-                
-                    y =  distance(Distance, theta, 0.048775) * np.sin(theta)
-                    jupiter_y.append(y)
-            
-                return jupiter_x, jupiter_y
-        
-            def uranus(Distance):
-                uranus_x = []
-                uranus_y = []
-                for theta in np.radians(range(0, 1000)):
-                
-                    x =  distance(Distance, theta, 0.0472) * np.cos(theta)
-                    uranus_x.append(x)
-                
-                    y =  distance(Distance, theta, 0.0472) * np.sin(theta)
-                    uranus_y.append(y)
-            
-                return uranus_x, uranus_y
-        
-            def neptune(Distance):
-                neptune_x = []
-                neptune_y = []
-                for theta in np.radians(range(0, 1000)):
-                    x =  distance(Distance, theta, 0.0086) * np.cos(theta)
-                    neptune_x.append(x)
-                
-                    y =  distance(Distance, theta, 0.0086) * np.sin(theta)
-                    neptune_y.append(y)
-        
-                return neptune_x, neptune_y
-        
-            def pluto(Distance):
-                pluto_x = []
-                pluto_y = []
-                for theta in np.radians(range(0, 1000)):
-                
-                    x =  distance(Distance, theta, 0.25) * np.cos(theta)
-                    pluto_x.append(x)
-                
-                    y =  distance(Distance, theta, 0.25) * np.sin(theta)
-                    pluto_y.append(y)
-            
-                return pluto_x, pluto_y
-        
-            self.ax.clear()
-            self.ax.plot(jupiter(5.20)[0], jupiter(5.20)[1], linestyle = '-', color = 'orange', label = 'jupiter')
-            self.ax.plot(saturn(9.58)[0], saturn(9.58)[1],  linestyle = '-', color = 'red', label ="saturn")
-            self.ax.plot(neptune(30.25)[0], neptune(30.25)[1], linestyle = '-', color = 'blue', label ="netpune")
-            self.ax.plot(pluto(39.51)[0], pluto(39.51)[1],  linestyle = '-',  color = 'brown', label ="pluto")
-            self.ax.plot(uranus(19.29)[0], uranus(19.29)[1],   linestyle = '-', color = 'cyan', label = "uranus")
-            self.ax.scatter(0, 0, color='yellow', label='Sun')
-            self.ax.set_xlabel(' X / AU')
-            self.ax.set_ylabel(' Y / AU')
-            self.ax.legend()
-            self.ax.set_aspect('equal')
-            self.ax.set_title("Outer Planets Orbit")
-            self.draw()
-        
-class PlotCanvasforTask3_Inner(FigureCanvasQTAgg):
+        self.ax.clear()
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['jupiter'], ORBITAL_ECCENTRICITIES['jupiter']), linestyle='-', color='orange', label='Jupiter')
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['saturn'], ORBITAL_ECCENTRICITIES['saturn']), linestyle='-', color='red', label='Saturn')
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['neptune'], ORBITAL_ECCENTRICITIES['neptune']), linestyle='-', color='blue', label='Neptune')
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['pluto'], ORBITAL_ECCENTRICITIES['pluto']), linestyle='-', color='brown', label='Pluto')
+        self.ax.plot(*orbital_coordinates_2d(PLANET_SEMI_MAJOR_AXIS_AU['uranus'], ORBITAL_ECCENTRICITIES['uranus']), linestyle='-', color='cyan', label='Uranus')
+        self.ax.scatter(0, 0, color='yellow', label='Sun')
+        self.ax.set_xlabel(' X / AU')
+        self.ax.set_ylabel(' Y / AU')
+        self.ax.legend()
+        self.ax.set_aspect('equal')
+        self.ax.set_title('Outer Planets Orbit')
+        self.draw()
+class InnerOrbitAnimationCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor((0, 0, 0, 0)) 
         self.fig.set_facecolor((0, 0, 0, 0)) 
-        super(PlotCanvasforTask3_Inner, self).__init__(self.fig)
+        super(InnerOrbitAnimationCanvas, self).__init__(self.fig)
         self.setParent(parent)
         self.animation = None 
         self.time = np.arange(0, 3, 0.0025)
@@ -617,13 +534,13 @@ class PlotCanvasforTask3_Inner(FigureCanvasQTAgg):
         
         self.ax.legend()
    
-class PlotCanvasforTask3_Outer(FigureCanvasQTAgg):
+class OuterOrbitAnimationCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor((0, 0, 0, 0)) 
         self.fig.set_facecolor((0, 0, 0, 0)) 
-        super(PlotCanvasforTask3_Outer, self).__init__(self.fig)
+        super(OuterOrbitAnimationCanvas, self).__init__(self.fig)
         self.setParent(parent)
         self.animation = None 
 
@@ -809,7 +726,7 @@ class PlotCanvasforTask3_Outer(FigureCanvasQTAgg):
             self.ax.legend()
         
 
-class PlotCanvas3DforInner(FigureCanvasQTAgg):
+class Inner3DOrbitCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111, projection='3d')
@@ -821,7 +738,7 @@ class PlotCanvas3DforInner(FigureCanvasQTAgg):
         self.ax.zaxis.pane.fill = False
         self.animation = []
         self.set_dark_background()
-        super(PlotCanvas3DforInner, self).__init__(self.fig)
+        super(Inner3DOrbitCanvas, self).__init__(self.fig)
         self.setParent(parent)
         
         
@@ -1025,7 +942,7 @@ class PlotCanvas3DforInner(FigureCanvasQTAgg):
         self.ax.legend()
             
   
-class PlotCanvas3DforOuter(FigureCanvasQTAgg):
+class Outer3DOrbitCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111, projection='3d')
@@ -1037,7 +954,7 @@ class PlotCanvas3DforOuter(FigureCanvasQTAgg):
         self.ax.zaxis.pane.fill = False
         self.animation = []
         self.set_dark_background()
-        super(PlotCanvas3DforOuter, self).__init__(self.fig)
+        super(Outer3DOrbitCanvas, self).__init__(self.fig)
         self.setParent(parent)
         
         
@@ -1319,7 +1236,7 @@ class Ui_MainWindow(object):
         plot1layout = QVBoxLayout(self.centralwidget)
 
        
-        self.plot_widget = PlotCanvasForTask1(self.centralwidget)
+        self.plot_widget = KeplersThirdLawCanvas(self.centralwidget)
         self.plot_widget.setGeometry(QtCore.QRect(120, 50, 600, 500))  # Adjust the geometry as per your requirement
         plot1layout.addWidget(self.plot_widget)
         self.plot_widget.setObjectName("plot_widget")
@@ -1328,51 +1245,51 @@ class Ui_MainWindow(object):
 
         
         plt.style.use('dark_background')
-        self.plot_widget2_inner = PlotCanvasForTask2_Inner(self.centralwidget)
+        self.plot_widget2_inner = InnerOrbitCanvas(self.centralwidget)
         self.plot_widget2_inner.setGeometry(QtCore.QRect(120, 50, 600, 500))  # Adjust the geometry as per your requirement
         self.plot_widget2_inner.setObjectName("plot_widget2_inner")
         plot1layout.addWidget(self.plot_widget2_inner)
         self.plot_widget2_inner.hide() 
         
         
-        self.plot_widget2_outer = PlotCanvasForTask2_Outer(self.centralwidget)
+        self.plot_widget2_outer = OuterOrbitCanvas(self.centralwidget)
         self.plot_widget2_outer.setGeometry(QtCore.QRect(129, 40, 661, 611))  # Adjust the geometry as per your requirement
         self.plot_widget2_outer.setObjectName("plot_widget2_outer")
         plot1layout.addWidget(self.plot_widget2_outer)
         self.plot_widget2_outer.hide()
         
-        self.plot_widget3_inner = PlotCanvasforTask3_Inner(self.centralwidget)
+        self.plot_widget3_inner = InnerOrbitAnimationCanvas(self.centralwidget)
         self.plot_widget3_inner.setGeometry(QtCore.QRect(65, 2, 661, 611))
         self.plot_widget3_inner.setObjectName("plot_widget3_inner")
         self.plot_widget3_inner.setStyleSheet("background-color: transparent;")
         self.plot_widget3_inner.hide()
 
-        self.plot_widget3_outer = PlotCanvasforTask3_Outer(self.centralwidget)
+        self.plot_widget3_outer = OuterOrbitAnimationCanvas(self.centralwidget)
         self.plot_widget3_outer.setGeometry(QtCore.QRect(65, 2, 661, 611))
-        self.plot_widget3_outer.setObjectName("plot_widget3_inner")
+        self.plot_widget3_outer.setObjectName("plot_widget3_outer")
         self.plot_widget3_outer.setStyleSheet("background-color: transparent;")
         self.plot_widget3_outer.hide()
         
        
         
         
-        self.plot_widget3DforInner = PlotCanvas3DforInner(self.centralwidget)
+        self.plot_widget3DforInner = Inner3DOrbitCanvas(self.centralwidget)
         self.plot_widget3DforInner.setGeometry(QtCore.QRect(129, 40, 661, 611))
         self.plot_widget3DforInner.setObjectName("plot_widget3DforInner")
         plot1layout.addWidget(self.plot_widget3DforInner)
         self.plot_widget3DforInner.setStyleSheet("background-color: transparent;")
         self.plot_widget3DforInner.hide()
         
-        self.plot_widget3DforOuter = PlotCanvas3DforOuter(self.centralwidget)
+        self.plot_widget3DforOuter = Outer3DOrbitCanvas(self.centralwidget)
         self.plot_widget3DforOuter.setGeometry(QtCore.QRect(129, 40, 661, 611))
-        self.plot_widget3DforOuter.setObjectName("plot_widget3DforInner")
+        self.plot_widget3DforOuter.setObjectName("plot_widget3DforOuter")
         plot1layout.addWidget(self.plot_widget3DforOuter)
         self.plot_widget3DforOuter.setStyleSheet("background-color: transparent;")
         self.plot_widget3DforOuter.hide()
 
 
         plt.style.use("default")
-        self.plot_widgetforTask5 = PlotCanvasForTask5(self.centralwidget)
+        self.plot_widgetforTask5 = PlutoAngleGraphCanvas(self.centralwidget)
         self.plot_widgetforTask5.setGeometry(QtCore.QRect(80, 40, 650, 550))
         self.plot_widgetforTask5.setObjectName("plot_widgetforTask5")
         self.plot_widgetforTask5.setStyleSheet("background-color: transparent;")
@@ -1472,7 +1389,7 @@ class Ui_MainWindow(object):
         self.Task1_button.setGeometry(QtCore.QRect(60, 220, 300, 81))
         self.Task1_button.setObjectName("Task1_button")
         self.Task1_button.clicked.connect(self.hide_buttons)
-        self.Task1_button.clicked.connect(self.Task1)
+        self.Task1_button.clicked.connect(self.show_keplers_third_law)
         # self.Task1_button.setStyleSheet("QPushButton#Task1_button { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; font-weight: bold; }")
         self.Task1_button.setStyleSheet("QPushButton#Task1_button { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; font-weight: bold; } QPushButton#Task1_button:hover { background-color: #95CCE9; }")
         self.Task1_button.setGraphicsEffect(shadow2)
@@ -1483,7 +1400,7 @@ class Ui_MainWindow(object):
         self.Task2_button.setObjectName("Task2_button")
         self.Task2_button.clicked.connect(self.hide_buttons)
         self.Task2_button.clicked.connect(self.Inner_Outer)
-        self.Task2_button.clicked.connect(self.Task2_Clicked)
+        self.Task2_button.clicked.connect(self.select_orbit_path_comparison)
         self.Task2_button.setStyleSheet(
             """
             QPushButton#Task2_button {
@@ -1523,7 +1440,7 @@ class Ui_MainWindow(object):
         self.Task3_button.setObjectName("Task3_button")
         self.Task3_button.clicked.connect(self.hide_buttons)
         self.Task3_button.clicked.connect(self.Inner_Outer)
-        self.Task3_button.clicked.connect(self.Task3_Clicked)
+        self.Task3_button.clicked.connect(self.select_orbit_animation_2d)
         self.Task3_button.setStyleSheet("background-color: #376991;" )
         self.Task3_button.setStyleSheet("QPushButton#Task3_button { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; font-weight: bold; } QPushButton#Task3_button:hover { background-color: #95CCE9; }")
         self.Task3_button.setGraphicsEffect(shadow3)
@@ -1533,7 +1450,7 @@ class Ui_MainWindow(object):
         self.Task4_button.setObjectName("Task4_button")
         self.Task4_button.clicked.connect(self.hide_buttons)
         self.Task4_button.clicked.connect(self.Inner_Outer)
-        self.Task4_button.clicked.connect(self.Task4_Clicked)
+        self.Task4_button.clicked.connect(self.select_orbit_animation_3d)
         self.Task4_button.setStyleSheet("background-color: #376991;" )
         self.Task4_button.setStyleSheet("QPushButton#Task4_button { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; font-weight: bold; } QPushButton#Task4_button:hover { background-color: #95CCE9; }")
         self.Task4_button.setGraphicsEffect(shadow4)
@@ -1542,7 +1459,7 @@ class Ui_MainWindow(object):
         self.Task5_button.setGeometry(QtCore.QRect(60, 420, 300, 81))
         self.Task5_button.setObjectName("Task5_button")
         self.Task5_button.clicked.connect(self.hide_buttons)
-        self.Task5_button.clicked.connect(self.Task5)
+        self.Task5_button.clicked.connect(self.show_pluto_angular_motion)
         self.Task5_button.setStyleSheet("background-color: #376991;" )
         self.Task5_button.setStyleSheet("QPushButton#Task5_button { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; font-weight: bold; } QPushButton#Task5_button:hover { background-color: #95CCE9; }")
         self.Task5_button.setGraphicsEffect(shadow5)
@@ -1552,7 +1469,7 @@ class Ui_MainWindow(object):
         self.Task6_button.setObjectName("Task6_button")
         self.Task6_button.clicked.connect(self.hide_buttons)
         self.Task6_button.clicked.connect(self.Inner_Outer)
-        self.Task6_button.clicked.connect(self.Task6_Clicked)
+        self.Task6_button.clicked.connect(self.select_orbit_comparison)
         self.Task6_button.setStyleSheet("background-color: #376991;" )
         self.Task6_button.setStyleSheet("QPushButton#Task6_button { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; font-weight: bold; } QPushButton#Task6_button:hover { background-color: #95CCE9; }")
         self.Task6_button.setGraphicsEffect(shadow6)
@@ -1563,7 +1480,7 @@ class Ui_MainWindow(object):
         self.Task7_button.setObjectName("Task7_button")
         self.Task7_button.clicked.connect(self.hide_buttons)
         self.Task7_button.clicked.connect(self.Inner_Outer)
-        self.Task7_button.clicked.connect(self.Task7_Clicked)
+        self.Task7_button.clicked.connect(self.select_central_body_orbit)
         self.Task7_button.setStyleSheet("background-color: #376991;" )
         self.Task7_button.setStyleSheet("QPushButton#Task7_button { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; font-weight: bold; } QPushButton#Task7_button:hover { background-color: #95CCE9; }")
         self.Task7_button.setGraphicsEffect(shadow7)
@@ -1619,15 +1536,21 @@ class Ui_MainWindow(object):
         self.InnerPlanets_Button.setGeometry(QtCore.QRect(180, 140, 440, 190))
         self.InnerPlanets_Button.setObjectName("InnerPlanets_Button")
         icon_path1 = r'images\inner.jpg'
-        inner = QIcon(icon_path1)
-        self.InnerPlanets_Button.setIcon(inner)
-        self.InnerPlanets_Button.setIconSize(self.InnerPlanets_Button.size())
-        self.InnerPlanets_Button.clicked.connect(self.Task2_Inner)
-        self.InnerPlanets_Button.clicked.connect(self.Task4_Inner)
-        self.InnerPlanets_Button.clicked.connect(self.Task3_Inner)
-        self.InnerPlanets_Button.clicked.connect(self.Task6_Inner)
-        self.InnerPlanets_Button.clicked.connect(self.task7_inner)
-        self.InnerPlanets_Button.clicked.connect(self.Inner_clicked)
+        inner_pixmap = QtGui.QPixmap(icon_path1)
+        inner_pixmap = inner_pixmap.scaled(
+            QtCore.QSize(440, 190),
+            QtCore.Qt.KeepAspectRatioByExpanding,
+            QtCore.Qt.SmoothTransformation,
+        )
+        self.InnerPlanets_Button.setIcon(QtGui.QIcon(inner_pixmap))
+        self.InnerPlanets_Button.setIconSize(QtCore.QSize(440, 190))
+        self.InnerPlanets_Button.setStyleSheet("border:none;")
+        self.InnerPlanets_Button.clicked.connect(self.show_inner_planet_orbits)
+        self.InnerPlanets_Button.clicked.connect(self.show_inner_3d_orbit_animation)
+        self.InnerPlanets_Button.clicked.connect(self.show_inner_orbit_animation)
+        self.InnerPlanets_Button.clicked.connect(self.show_inner_orbit_comparison)
+        self.InnerPlanets_Button.clicked.connect(self.show_inner_central_body_orbit_controls)
+        self.InnerPlanets_Button.clicked.connect(self.select_inner_zone)
         self.InnerPlanets_Button.hide()
         
         
@@ -1636,15 +1559,21 @@ class Ui_MainWindow(object):
         self.OuterPlanets_Button.setText("")
         self.OuterPlanets_Button.setObjectName("OuterPlanets_Button")
         icon_path2 = r'images\outer.jpg'
-        outer = QIcon(icon_path2)
-        self.OuterPlanets_Button.setIcon(outer)
-        self.OuterPlanets_Button.setIconSize(self.InnerPlanets_Button.size())
-        self.OuterPlanets_Button.clicked.connect(self.Task2_Outer)
-        self.OuterPlanets_Button.clicked.connect(self.Task4_Outer)
-        self.OuterPlanets_Button.clicked.connect(self.Task3_Outer)
-        self.OuterPlanets_Button.clicked.connect(self.Task6_Outer)
-        self.OuterPlanets_Button.clicked.connect(self.task7_outer)
-        self.OuterPlanets_Button.clicked.connect(self.Outer_clicked)
+        outer_pixmap = QtGui.QPixmap(icon_path2)
+        outer_pixmap = outer_pixmap.scaled(
+            QtCore.QSize(440, 190),
+            QtCore.Qt.KeepAspectRatioByExpanding,
+            QtCore.Qt.SmoothTransformation,
+        )
+        self.OuterPlanets_Button.setIcon(QtGui.QIcon(outer_pixmap))
+        self.OuterPlanets_Button.setIconSize(QtCore.QSize(440, 190))
+        self.OuterPlanets_Button.setStyleSheet("border:none;")
+        self.OuterPlanets_Button.clicked.connect(self.show_outer_planet_orbits)
+        self.OuterPlanets_Button.clicked.connect(self.show_outer_3d_orbit_animation)
+        self.OuterPlanets_Button.clicked.connect(self.show_outer_orbit_animation)
+        self.OuterPlanets_Button.clicked.connect(self.show_outer_orbit_comparison)
+        self.OuterPlanets_Button.clicked.connect(self.show_outer_central_body_orbit_controls)
+        self.OuterPlanets_Button.clicked.connect(self.select_outer_zone)
         self.OuterPlanets_Button.hide()
         
         self.InnerPlanetsLabel = QtWidgets.QLabel(self.centralwidget)
@@ -2001,11 +1930,11 @@ class Ui_MainWindow(object):
         self.PlotButton.setStyleSheet("QPushButton#PlotButton6 { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; } QPushButton#PlotButton6:hover { background-color: lightblue; } QPushButton#PlotButton6:pressed { background-color: #D0DCEC; }")
         self.PlotButton.clicked.connect(self.check_checkbox_group1)
         self.PlotButton.clicked.connect(self.check_checkbox_group2)
-        self.PlotButton.clicked.connect(self.plot_task6)
+        self.PlotButton.clicked.connect(self.plot_orbit_comparison)
         self.PlotButton.hide()
 
 
-        self.plot_widgetforTask6 = PlotCanvasForTask6(self.centralwidget)
+        self.plot_widgetforTask6 = OrbitComparisonCanvas(self.centralwidget)
         self.plot_widgetforTask6.setGeometry(QtCore.QRect(310, 90, 471, 421))  
         self.plot_widgetforTask6.setObjectName("plot_widget6")
         self.plot_widgetforTask6.setStyleSheet("background-color: transparent;")
@@ -2028,7 +1957,7 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         self.Plot_Button_task7.setFont(font)
         self.Plot_Button_task7.setObjectName("Plot_Button_task7")
-        self.Plot_Button_task7.clicked.connect(self.plot_task7_2D)
+        self.Plot_Button_task7.clicked.connect(self.plot_central_body_orbit_2d)
         self.Plot_Button_task7.setStyleSheet("QPushButton#Plot_Button_task7 { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; } QPushButton#Plot_Button_task7:hover { background-color: lightblue; } QPushButton#Plot_Button_task7:pressed { background-color: #D0DCEC; }")
         self.Plot_Button_task7.hide()
 
@@ -2114,7 +2043,7 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         self.Plot_3d.setFont(font)
         self.Plot_3d.setStyleSheet("QPushButton#Plot_3d { border-radius: 40px; background-color: #376991; color: white; font-size: 18px; } QPushButton#Plot_3d:hover { background-color: lightblue; } QPushButton#Plot_3d:pressed { background-color: #D0DCEC; }")
-        self.Plot_3d.clicked.connect(self.plot_task7_3D)
+        self.Plot_3d.clicked.connect(self.plot_central_body_orbit_3d)
         self.Plot_3d.hide()
 
         self.widget = QtWidgets.QWidget(self.centralwidget)
@@ -2253,13 +2182,13 @@ class Ui_MainWindow(object):
 
         
         
-        self.plot_widget_task7 = PlotCanvasForTask7(self.centralwidget)
+        self.plot_widget_task7 = CentralBodyOrbitCanvas(self.centralwidget)
         self.plot_widget_task7.setGeometry(QtCore.QRect(310, 90, 471, 421))  # Adjust the geometry as per your requirement
         self.plot_widget_task7.setObjectName("plot_widget7")
         self.plot_widget_task7.setStyleSheet("background-color: transparent;")
         self.plot_widget_task7.hide()
 
-        self.plot_widget_task7_3D = PlotCanvasForTask7_3D(self.centralwidget)
+        self.plot_widget_task7_3D = CentralBodyOrbit3DCanvas(self.centralwidget)
         self.plot_widget_task7_3D.setGeometry(QtCore.QRect(310, 90, 471, 421))  # Adjust the geometry as per your requirement
         self.plot_widget_task7_3D.setObjectName("plot_widget7v2")
         self.plot_widget_task7_3D.setStyleSheet("background-color: transparent;")
@@ -2278,15 +2207,15 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.Task1_button.setText(_translate("MainWindow", "Task 1"))
-        self.Task2_button.setText(_translate("MainWindow", "Task 2"))
-        self.Task3_button.setText(_translate("MainWindow", "Task 3"))
-        self.Task4_button.setText(_translate("MainWindow", "Task 4"))
-        self.Task5_button.setText(_translate("MainWindow", "Task 5"))
-        self.Task6_button.setText(_translate("MainWindow", "Task 6"))
-        self.Task7_button.setText(_translate("MainWindow", "Task 7"))
-        self.main_title.setText(_translate("MainWindow", "BPhO Computational challenge 2023"))
-        self.our_names.setText(_translate("MainWindow", "Created by Adam and Dominykas"))
+        self.Task1_button.setText(_translate("MainWindow", "Kepler's 3rd Law"))
+        self.Task2_button.setText(_translate("MainWindow", "2D Graph of Orbits"))
+        self.Task3_button.setText(_translate("MainWindow", "2D Animation of Orbits"))
+        self.Task4_button.setText(_translate("MainWindow", "3D Animation of Orbits"))
+        self.Task5_button.setText(_translate("MainWindow", "Orbital Angle vs Time"))
+        self.Task6_button.setText(_translate("MainWindow", "Solar System Spirograph"))
+        self.Task7_button.setText(_translate("MainWindow", "Set Central Body and Plot Orbits"))
+        self.main_title.setText(_translate("MainWindow", "Celestial Orbits Visualiser"))
+        self.our_names.setText(_translate("MainWindow", "Created by Adam Wasiak"))
         self.Return_Button.setText(_translate("MainWindow", "Return"))
         self.InnerPlanetsLabel.setText(_translate("MainWindow", "Inner planet orbits"))
         self.OuterPlanetsLabel.setText(_translate("MainWindow", "Outer planet orbits"))
@@ -2349,59 +2278,59 @@ class Ui_MainWindow(object):
 
 
 
-    global Task2_clicked
-    Task2_clicked = False   
-    def Task2_Clicked(self):
-        global Task2_clicked
-        Task2_clicked = True
+    global orbit_path_comparison_selected
+    orbit_path_comparison_selected = False   
+    def select_orbit_path_comparison(self):
+        global orbit_path_comparison_selected
+        orbit_path_comparison_selected = True
      
-    global Task3_clicked
-    Task3_clicked = False   
-    def Task3_Clicked(self):
-        global Task3_clicked
-        Task3_clicked = True
+    global orbit_animation_2d_selected
+    orbit_animation_2d_selected = False   
+    def select_orbit_animation_2d(self):
+        global orbit_animation_2d_selected
+        orbit_animation_2d_selected = True
     
-    global Task4_clicked
-    Task4_clicked = False   
-    def Task4_Clicked(self):
-        global Task4_clicked
-        Task4_clicked = True
+    global orbit_animation_3d_selected
+    orbit_animation_3d_selected = False   
+    def select_orbit_animation_3d(self):
+        global orbit_animation_3d_selected
+        orbit_animation_3d_selected = True
         
 
-    global Task6_clicked
-    Task6_clicked = False
-    def Task6_Clicked(self):
-        global Task6_clicked
-        Task6_clicked = True
+    global orbit_comparison_selected
+    orbit_comparison_selected = False
+    def select_orbit_comparison(self):
+        global orbit_comparison_selected
+        orbit_comparison_selected = True
         
 
-    global Task7_clicked
-    Task7_clicked = False
-    def Task7_Clicked(self):
-        global Task7_clicked
-        Task7_clicked = True
+    global central_body_orbit_selected
+    central_body_orbit_selected = False
+    def select_central_body_orbit(self):
+        global central_body_orbit_selected
+        central_body_orbit_selected = True
 
     global inner
     inner = False
-    def Inner_clicked(self):
+    def select_inner_zone(self):
         global inner
         inner = True
     
     global outer
     outer = False
-    def Outer_clicked(self):
+    def select_outer_zone(self):
         global outer
         outer = True
 
 
     def start_animation(self):
-        if Task3_clicked == True:
+        if orbit_animation_2d_selected == True:
             if inner == True:
                 self.plot_widget3_inner.start_animation()
             if outer == True:
                 self.plot_widget3_outer.start_animation()
         
-        if Task4_clicked == True:
+        if orbit_animation_3d_selected == True:
             if inner == True:
                 self.plot_widget3DforInner.start_animation3D()
             if outer == True:
@@ -2409,39 +2338,39 @@ class Ui_MainWindow(object):
 
 
     def stop_animation(self):
-        if Task3_clicked == True:
+        if orbit_animation_2d_selected == True:
             if inner == True:
                self.plot_widget3_inner.soft_stop()
             if outer == True:
                self.plot_widget3_outer.soft_stop()
         
-        if Task4_clicked == True:
+        if orbit_animation_3d_selected == True:
             if inner == True:
                 self.plot_widget3DforInner.soft_stop()
             if outer == True:
                 self.plot_widget3DforOuter.soft_stop()
         
     def resume_animation(self):
-         if Task3_clicked == True:
+         if orbit_animation_2d_selected == True:
             if inner == True:
                 self.plot_widget3_inner.resume()
             if outer == True:
                 self.plot_widget3_outer.resume()
         
-         if Task4_clicked == True:
+         if orbit_animation_3d_selected == True:
             if inner == True:
                 self.plot_widget3DforInner.resume()
             if outer == True:
                 self.plot_widget3DforOuter.resume()
 
     def reset_animation(self):
-        if Task3_clicked == True:
+        if orbit_animation_2d_selected == True:
             if inner == True:
                 self.plot_widget3_inner.stop_animation()
             if outer == True:
                 self.plot_widget3_outer.stop_animation()
         
-        if Task4_clicked == True:
+        if orbit_animation_3d_selected == True:
             if inner == True:
                 self.plot_widget3DforInner.stop_animation3D()
             if outer == True:
@@ -2604,11 +2533,11 @@ class Ui_MainWindow(object):
 
         
     def return_button(self):
-        global Task2_clicked
-        global Task3_clicked
-        global Task4_clicked
-        global Task6_clicked
-        global Task7_clicked
+        global orbit_path_comparison_selected
+        global orbit_animation_2d_selected
+        global orbit_animation_3d_selected
+        global orbit_comparison_selected
+        global central_body_orbit_selected
         for i in range(1, 8): 
             button = getattr(self, f"Task{i}_button")  
             button.setVisible(True)
@@ -2626,15 +2555,15 @@ class Ui_MainWindow(object):
         
         
         
-        Task2_clicked = False
-        Task3_clicked = False
-        Task4_clicked = False
-        Task6_clicked = False
-        Task7_clicked = False
+        orbit_path_comparison_selected = False
+        orbit_animation_2d_selected = False
+        orbit_animation_3d_selected = False
+        orbit_comparison_selected = False
+        central_body_orbit_selected = False
         
         
            
-    def Task1(self):
+    def show_keplers_third_law(self):
         self.plot_widget.setVisible(True)
         
         
@@ -2644,8 +2573,8 @@ class Ui_MainWindow(object):
         self.OuterPlanets_Button.setVisible(True)
         self.InnerPlanets_Button.setVisible(True)
         
-    def Task2_Inner(self):
-        if Task2_clicked == True:
+    def show_inner_planet_orbits(self):
+        if orbit_path_comparison_selected == True:
             self.Return_Button.hide()
             self.plot_widget2_inner.setVisible(True)
             self.OuterPlanetsLabel.setVisible(False)
@@ -2654,8 +2583,8 @@ class Ui_MainWindow(object):
             self.InnerPlanets_Button.setVisible(False)
             self.Return_Inner_Outer.setVisible(True)
         
-    def Task2_Outer(self):
-        if Task2_clicked == True:
+    def show_outer_planet_orbits(self):
+        if orbit_path_comparison_selected == True:
             self.Return_Button.hide()
             self.plot_widget2_outer.setVisible(True)
             self.OuterPlanetsLabel.setVisible(False)
@@ -2666,8 +2595,8 @@ class Ui_MainWindow(object):
             
         
         
-    def Task3_Inner(self):
-        if Task3_clicked == True:
+    def show_inner_orbit_animation(self):
+        if orbit_animation_2d_selected == True:
             self.Return_Button.hide()
             self.Return_Inner_Outer.setVisible(True)
             self.OuterPlanetsLabel.setVisible(False)
@@ -2680,8 +2609,8 @@ class Ui_MainWindow(object):
             self.ResumeButton.setVisible(True)
             self.ResetButton.setVisible(True)
             
-    def Task3_Outer(self):
-        if Task3_clicked == True:
+    def show_outer_orbit_animation(self):
+        if orbit_animation_2d_selected == True:
             self.Return_Button.hide()
             self.Return_Inner_Outer.setVisible(True)
             self.OuterPlanetsLabel.setVisible(False)
@@ -2695,8 +2624,8 @@ class Ui_MainWindow(object):
             self.ResetButton.setVisible(True)
         
         
-    def Task4_Inner(self):
-        if Task4_clicked == True:
+    def show_inner_3d_orbit_animation(self):
+        if orbit_animation_3d_selected == True:
             self.Return_Button.hide()
             self.plot_widget3DforInner.setVisible(True)
             self.OuterPlanetsLabel.setVisible(False)
@@ -2709,8 +2638,8 @@ class Ui_MainWindow(object):
             self.ResumeButton.setVisible(True)
             self.ResetButton.setVisible(True)
             
-    def Task4_Outer(self):
-        if Task4_clicked == True:
+    def show_outer_3d_orbit_animation(self):
+        if orbit_animation_3d_selected == True:
             self.Return_Button.hide()
             self.plot_widget3DforOuter.setVisible(True)
             self.OuterPlanetsLabel.setVisible(False)
@@ -2723,7 +2652,7 @@ class Ui_MainWindow(object):
             self.ResumeButton.setVisible(True)
             self.ResetButton.setVisible(True)
 
-    def Task5(self):
+    def show_pluto_angular_motion(self):
         self.plot_widgetforTask5.setVisible(True)
         self.horizontalSlider.setVisible(True)
         self.plot_widgetforTask5.update_graph(0.25)
@@ -2733,8 +2662,8 @@ class Ui_MainWindow(object):
         eccentricity = value / 20.0  
         self.plot_widgetforTask5.update_graph(eccentricity)
         
-    def Task6_Outer(self):
-        if Task6_clicked == True:
+    def show_outer_orbit_comparison(self):
+        if orbit_comparison_selected == True:
             self.Return_Button.hide()
             self.PlotButton.setVisible(True)
             self.label.setVisible(True)
@@ -2764,8 +2693,8 @@ class Ui_MainWindow(object):
             self.Planet1_2.setVisible(True)
             self.plot_widgetforTask6.clear_graph6()
 
-    def Task6_Inner(self):
-        if Task6_clicked == True:   
+    def show_inner_orbit_comparison(self):
+        if orbit_comparison_selected == True:   
             self.PlotButton.setVisible(True)
             self.label_2.setVisible(True)
             self.layoutWidget3.setVisible(True)
@@ -2840,7 +2769,7 @@ class Ui_MainWindow(object):
     
        
         
-    def plot_task6(self):
+    def plot_orbit_comparison(self):
         
         planet1 = self.check_checkbox_group1()
         planet2 = self.check_checkbox_group2()
@@ -2884,7 +2813,7 @@ class Ui_MainWindow(object):
                 return "no planet"
        
         
-    def plot_task7_2D(self):
+    def plot_central_body_orbit_2d(self):
         
         self.plot_widget_task7.setVisible(True)
         self.plot_widget_task7_3D.setVisible(False)
@@ -2898,7 +2827,7 @@ class Ui_MainWindow(object):
             self.selected_planet.setText(" ")
             self.plot_widget_task7.plot_data(central_planet, years)
 
-    def plot_task7_3D(self):
+    def plot_central_body_orbit_3d(self):
         
         self.plot_widget_task7.setVisible(False)
         self.plot_widget_task7_3D.setVisible(True)
@@ -2912,12 +2841,12 @@ class Ui_MainWindow(object):
             self.selected_planet.setText(" ")
             self.plot_widget_task7_3D.plot_data3D(central_planet, years)
 
-            
+             
 
 
 
-    def task7_inner(self):
-        if Task7_clicked == True:
+    def show_inner_central_body_orbit_controls(self):
+        if central_body_orbit_selected == True:
              self.OuterPlanetsLabel.setVisible(False)
              self.InnerPlanetsLabel.setVisible(False)
              self.OuterPlanets_Button.setVisible(False)
@@ -2940,8 +2869,8 @@ class Ui_MainWindow(object):
              self.widget.setVisible(True)
              self.plot_widget_task7_3D.clear_graph()
 
-    def task7_outer(self):
-        if Task7_clicked == True:
+    def show_outer_central_body_orbit_controls(self):
+        if central_body_orbit_selected == True:
             self.OuterPlanetsLabel.setVisible(False)
             self.InnerPlanetsLabel.setVisible(False)
             self.OuterPlanets_Button.setVisible(False)
@@ -2965,111 +2894,64 @@ class Ui_MainWindow(object):
             self.info_box.setVisible(True)
             self.plot_widget_task7.clear_graph()
             self.plot_widget_task7_3D.clear_graph()
-            
-        
-   
-   
-        
-class  PlotCanvasForTask5(FigureCanvasQTAgg):
-     def __init__(self, parent=None, width=5, height=4, dpi=100):
+
+
+class PlutoAngleGraphCanvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor("#FFFFFF")
         self.fig.set_facecolor((0, 0, 0, 0))
-        super(PlotCanvasForTask5, self).__init__(self.fig)
+        super(PlutoAngleGraphCanvas, self).__init__(self.fig)
         self.setParent(parent)
-         
-        
-    
-     def update_graph(self, eccentricity):
+
+    def update_graph(self, eccentricity):
         self.ax.clear()
         # Update graph using the provided eccentricity value
         self.plot_data(eccentricity)
         self.draw()
 
-     def plot_data(self, eccentricity):
-          
+    def plot_data(self, eccentricity):
+        def angle_vs_time(time, Period, eccentricity, theta0):
+            dtheta = 1/1000
+            N = np.ceil(time[-1] / Period)
+            theta = np.arange(theta0, 2 * np.pi * N + theta0, dtheta)
+            f = (1 - eccentricity * np.cos(theta)) ** (-2)
+            L = len(theta)
+            isodd = np.arange(1, L-1) % 2
+            isodd[isodd == 1] = 4
+            isodd[isodd == 0] = 2
+            c = np.concatenate(([1], isodd, [1]))
+            constant_factor = Period * ((1 - eccentricity**2)**(3/2)) * (1 / (2 * np.pi)) * dtheta * (1 / 3)
+            c_times_f = c * f
+            tt = constant_factor * np.cumsum(c_times_f)
+            theta_interpolated = interp1d(tt, theta, kind='cubic', fill_value='extrapolate')
+            theta = theta_interpolated(time)
+            return theta
 
-            def angle_vs_time(time, Period, eccentricity, theta0):
-                
-                dtheta = 1/1000
-                
-                N = np.ceil(time[-1] / Period)
-                
-                theta = np.arange(theta0, 2 * np.pi * N + theta0, dtheta)
-                
-                f =(1 - eccentricity * np.cos(theta))**(-2)
-                
-                L = len(theta)
-                
-                isodd = np.arange(1, L-1) % 2
+        time = np.arange(0, 750)
+        theta = angle_vs_time(time, 248.348, eccentricity, 0)
+        theta2 = angle_vs_time(time, 248.348, 0, 0)
 
-                isodd[isodd == 1] = 4
-                isodd[isodd == 0] = 2
-                
-                c = np.concatenate(([1], isodd, [1]))
-                
-                constant_factor = Period * ((1 - eccentricity**2)**(3/2)) * (1 / (2 * np.pi)) * dtheta * (1 / 3)
+        self.ax.set_xlim([0, 800])
+        self.ax.set_ylim([0, 20])
+        self.ax.plot(time, theta, color='green', label=f'Eccentricity =  {eccentricity}')
+        self.ax.plot(time, theta2, color='blue', label='Eccentricity =  0')
+        self.ax.tick_params(axis='x', colors='white')
+        self.ax.tick_params(axis='y', colors='white')
+        self.ax.set_xlabel('time/years')
+        self.ax.set_ylabel("orbital polar angle /")
+        self.ax.set_title("Orbital angle vs time for pluto", color="white")
+        self.ax.spines['left'].set_edgecolor('white')
+        self.ax.spines['right'].set_edgecolor('white')
+        self.ax.spines['bottom'].set_edgecolor('white')
+        self.ax.spines['top'].set_edgecolor('white')
+        self.ax.legend()
+        self.ax.xaxis.label.set_color('white')
+        self.ax.yaxis.label.set_color('white')
+        self.draw()
 
-            
-                c_times_f = c * f
-
-            
-                tt = constant_factor * np.cumsum(c_times_f)
-                
-                theta_interpolated = interp1d(tt, theta, kind='cubic', fill_value='extrapolate')
-
-                
-                theta = theta_interpolated(time)
-                
-                return theta
-                
-            time = np.arange(0, 750)
-
-            theta = angle_vs_time(time, 248.348, eccentricity, 0)
-
-            theta2 = angle_vs_time(time, 248.348, 0, 0)
-
-            self.ax.set_xlim([0, 800])
-
-            self.ax.set_ylim([0,20])
-
-
-                        
-            self.ax.plot(time, theta, color = 'green', label = f'Eccentricity =  {eccentricity}')
-
-            self.ax.plot(time, theta2, color = 'blue', label = 'Eccentricity =  0' )
-
-            self.ax.tick_params(axis='x', colors='white')
-            self.ax.tick_params(axis='y', colors='white')
-            
-            
-
-            self.ax.set_xlabel('time/years')
-
-            self.ax.set_ylabel("orbital polar angle /")
-
-
-            self.ax.set_title("Orbital angle vs time for pluto", color="white")
-            self.ax.spines['left'].set_edgecolor('white')    # Left spine
-            self.ax.spines['right'].set_edgecolor('white')  # Right spine
-            self.ax.spines['bottom'].set_edgecolor('white')  # Bottom spine
-            self.ax.spines['top'].set_edgecolor('white')  # Top spine
-            
-            self.ax.legend()
-           
-
-
-            self.ax.xaxis.label.set_color('white')   # Change to your desired color
-            self.ax.yaxis.label.set_color('white')
-            
-
-            self.draw()
-        
-            
-        
-                           
-class PlotCanvasForTask6(FigureCanvasQTAgg):
+class OrbitComparisonManager(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         plt.style.use("default")
         plt.xlabel("x/AU", color='black')
@@ -3080,15 +2962,15 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor("#FFFFFF")
         self.fig.set_facecolor("#181E35")
-        super(PlotCanvasForTask6, self).__init__(self.fig)
+        super(OrbitComparisonManager, self).__init__(self.fig)
         self.setParent(parent)
         
     def clear_graph6(self):
         self.ax.clear()
         self.draw()
 
-    def Task6_Outer(self):
-        if Task6_clicked == True:
+    def show_outer_orbit_comparison(self):
+        if orbit_comparison_selected == True:
             self.Return_Button.hide()
             self.PlotButton.setVisible(True)
             self.label.setVisible(True)
@@ -3118,8 +3000,8 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
             self.Planet1_2.setVisible(True)
             self.plot_widgetforTask6.clear_graph6()
 
-    def Task6_Inner(self):
-        if Task6_clicked == True:   
+    def show_inner_orbit_comparison(self):
+        if orbit_comparison_selected == True:   
             self.PlotButton.setVisible(True)
             self.label_2.setVisible(True)
             self.layoutWidget3.setVisible(True)
@@ -3196,7 +3078,7 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
     
        
         
-    def plot_task6(self):
+    def plot_planet_orbit_comparison(self):
         
         planet1 = self.check_checkbox_group1()
         planet2 = self.check_checkbox_group2()
@@ -3207,8 +3089,8 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
         elif planet1 == planet2:
             self.selected_planets.setText("Please select two different planets")
             self.selected_planets.setGeometry(QtCore.QRect(405, 190, 400, 200))
-            font = QtGui.QFont()
             self.selected_planets.setStyleSheet("background-color: transparent; border: none; color: black;")
+            font = QtGui.QFont()
             font.setPointSize(12)
             self.plot_widgetforTask6.clear_graph6()
          
@@ -3241,7 +3123,7 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
                 return "no planet"
        
         
-    def plot_task7_2D(self):
+    def plot_central_body_orbit_2d(self):
         
         self.plot_widget_task7.setVisible(True)
         self.plot_widget_task7_3D.setVisible(False)
@@ -3255,7 +3137,7 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
             self.selected_planet.setText(" ")
             self.plot_widget_task7.plot_data(central_planet, years)
 
-    def plot_task7_3D(self):
+    def plot_central_body_orbit_3d(self):
         
         self.plot_widget_task7.setVisible(False)
         self.plot_widget_task7_3D.setVisible(True)
@@ -3273,8 +3155,8 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
 
 
 
-    def task7_inner(self):
-        if Task7_clicked == True:
+    def show_inner_central_body_orbit_controls(self):
+        if central_body_orbit_selected == True:
              self.OuterPlanetsLabel.setVisible(False)
              self.InnerPlanetsLabel.setVisible(False)
              self.OuterPlanets_Button.setVisible(False)
@@ -3297,8 +3179,8 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
              self.widget.setVisible(True)
              self.plot_widget_task7_3D.clear_graph()
 
-    def task7_outer(self):
-        if Task7_clicked == True:
+    def show_outer_central_body_orbit_controls(self):
+        if central_body_orbit_selected == True:
             self.OuterPlanetsLabel.setVisible(False)
             self.InnerPlanetsLabel.setVisible(False)
             self.OuterPlanets_Button.setVisible(False)
@@ -3326,7 +3208,7 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
         
         
         
-class PlotCanvasForTask6(FigureCanvasQTAgg):
+class OrbitComparisonCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         plt.style.use("default")
         plt.xlabel("x/AU", color='black')
@@ -3337,7 +3219,7 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor("#FFFFFF") 
         self.fig.set_facecolor((0, 0, 0, 0)) 
-        super(PlotCanvasForTask6, self).__init__(self.fig)
+        super(OrbitComparisonCanvas, self).__init__(self.fig)
         self.setParent(parent)
         
     def clear_graph6(self):
@@ -3459,14 +3341,14 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
        
            
            
-class PlotCanvasForTask7(FigureCanvasQTAgg):
+class CentralBodyOrbitCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         plt.style.use("dark_background")
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor((0, 0, 0, 0)) 
         self.fig.set_facecolor((0, 0, 0, 0)) 
-        super(PlotCanvasForTask7, self).__init__(self.fig)
+        super(CentralBodyOrbitCanvas, self).__init__(self.fig)
         self.setParent(parent)
         
     def clear_graph(self):
@@ -3513,8 +3395,8 @@ class PlotCanvasForTask7(FigureCanvasQTAgg):
             pi = np.pi
             theta = (2 * pi * time) / period
 
-            x_coordinate = distance_task7(Distance, theta, eccentricity) * np.cos(theta)
-            y_coordinate = distance_task7(Distance, theta, eccentricity) * np.sin(theta)
+            x_coordinate = distance_plus(Distance, theta, eccentricity) * np.cos(theta)
+            y_coordinate = distance_plus(Distance, theta, eccentricity) * np.sin(theta)
             
             return x_coordinate, y_coordinate
         
@@ -3564,7 +3446,7 @@ class PlotCanvasForTask7(FigureCanvasQTAgg):
         self.draw()    
 
 
-class PlotCanvasForTask7_3D(FigureCanvasQTAgg):
+class CentralBodyOrbit3DCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         plt.style.use("dark_background")
         self.fig = Figure(figsize=(width, height), dpi=dpi)
@@ -3575,7 +3457,7 @@ class PlotCanvasForTask7_3D(FigureCanvasQTAgg):
         self.ax.xaxis.pane.fill = False
         self.ax.yaxis.pane.fill = False
         self.ax.zaxis.pane.fill = False
-        super(PlotCanvasForTask7_3D, self).__init__(self.fig)
+        super(CentralBodyOrbit3DCanvas, self).__init__(self.fig)
         self.setParent(parent)
         self.ax.set_facecolor((0, 0, 0, 0)) 
         self.fig.set_facecolor((0, 0, 0, 0)) 
@@ -3724,6 +3606,7 @@ class PlotCanvasForTask7_3D(FigureCanvasQTAgg):
 
 
 if __name__ == "__main__":
+    # Launch the Qt application and open the simulator window.
     import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
