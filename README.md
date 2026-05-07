@@ -1,6 +1,6 @@
 # Interactive Celestial Mechanics Simulator
 
-`BPHO.py` is a PyQt5 desktop application for visualising orbital mechanics and planet motion. It combines a Qt user interface with `matplotlib` plotting to display:
+`Celestial_Sim.py` is a PyQt5 desktop application for visualising orbital mechanics and planet motion. It combines a Qt user interface with `matplotlib` plotting to display:
 
 - 2D and 3D orbital paths
 - orbit comparison between inner and outer planets
