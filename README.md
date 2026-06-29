@@ -126,6 +126,29 @@ bpho-solar-system-2023/
 │   ├── App.py              # Main window, navigation, and event routing
 │   ├── distance.py         # Orbital distance formula r(a, θ, e)
 │   ├── PlanetClasses.py    # Planet and Planet3D coordinate generators
+│   ├── TaskOne.py         
+│   ├── TaskTwo.py         
+│   ├── TaskThree.py        
+│   ├── TaskFour.py         
+│   ├── TaskFive.py        
+│   ├── TaskSix.py          
+│   └── TaskSeven.py        
+├── images/
+│   ├── inner.jpg
+│   └── outer.png
+├── assets/
+│   └── screenshots/        # README images
+│   └── animations/         # README GIFs
+├── requirements.txt
+└── README.md
+```
+
+
+bpho-solar-system-2023/
+├── src/
+│   ├── App.py              # Main window, navigation, and event routing
+│   ├── distance.py         # Orbital distance formula r(a, θ, e)
+│   ├── PlanetClasses.py    # Planet and Planet3D coordinate generators
 │   ├── TaskOne.py          # Kepler's Third Law
 │   ├── TaskTwo.py          # Static 2D orbits
 │   ├── TaskThree.py        # Animated 2D orbits
@@ -133,12 +156,15 @@ bpho-solar-system-2023/
 │   ├── TaskFive.py         # Orbital angle vs time
 │   ├── TaskSix.py          # Spirograph synodic patterns
 │   └── TaskSeven.py        # Relative orbits (2D & 3D)
+├── assets/
+│   └── screenshots/        # README images and GIFs
 ├── images/
-│   ├── inner.jpg
-│   └── outer.png
+│   ├── inner.jpg           # Runtime asset — inner planets button
+│   └── outer.png           # Runtime asset — outer planets button
+├── icon.ico
+├── .gitignore
 ├── requirements.txt
 └── README.md
-```
 
 ---
 
