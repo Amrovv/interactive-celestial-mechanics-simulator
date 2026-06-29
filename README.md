@@ -19,6 +19,7 @@ Seven competition tasks are accessible from a central menu:
 | 7 | **Relative Orbits** | Re-centres the solar system on any chosen planet; available in both 2D and 3D |
 
 ---
+
 ## Showcase
  
 <table>
@@ -54,7 +55,8 @@ Seven competition tasks are accessible from a central menu:
     <td align="center">Task 7 — Relative Orbits</td>
     <td></td>
   </tr>
-</table>
+</table> 
+
 ---
 
 ## Technical Overview
