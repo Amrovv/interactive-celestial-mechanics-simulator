@@ -102,7 +102,7 @@ Download the latest `.exe` from the [Releases](../../releases) page and run it d
 ### Option B — Run from Source
 
 ```bash
-git clone https://github.com/<your-username>/bpho-solar-system-2023.git
+git clone https://github.com/<your-username>/interactive-celestial-mechanics-simulator.git
 cd bpho-solar-system-2023
 pip install -r requirements.txt
 python src/App.py
