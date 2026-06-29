@@ -121,7 +121,7 @@ scipy>=1.7
 ## Project Structure
 
 ```
-bpho-solar-system-2023/
+interactive-celestial-mechanics-simulator/
 ├── src/
 │   ├── App.py              # Main window, navigation, and event routing
 │   ├── distance.py         # Orbital distance formula r(a, θ, e)
@@ -142,31 +142,6 @@ bpho-solar-system-2023/
 ├── requirements.txt
 └── README.md
 ```
-
-
-bpho-solar-system-2023/
-├── src/
-│   ├── App.py              # Main window, navigation, and event routing
-│   ├── distance.py         # Orbital distance formula r(a, θ, e)
-│   ├── PlanetClasses.py    # Planet and Planet3D coordinate generators
-│   ├── TaskOne.py          # Kepler's Third Law
-│   ├── TaskTwo.py          # Static 2D orbits
-│   ├── TaskThree.py        # Animated 2D orbits
-│   ├── TaskFour.py         # Animated 3D orbits
-│   ├── TaskFive.py         # Orbital angle vs time
-│   ├── TaskSix.py          # Spirograph synodic patterns
-│   └── TaskSeven.py        # Relative orbits (2D & 3D)
-├── assets/
-│   └── screenshots/        # README images and GIFs
-├── images/
-│   ├── inner.jpg           # Runtime asset — inner planets button
-│   └── outer.png           # Runtime asset — outer planets button
-├── icon.ico
-├── .gitignore
-├── requirements.txt
-└── README.md
-
----
 
 ## Authors
 
