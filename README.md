@@ -31,15 +31,15 @@ Seven competition tasks are accessible from a central menu:
     <td align="center">Task 2 — Static 2D Orbits</td>
   </tr>
   <tr>
-    <td><img src="assets/screenshots/task3.gif" alt="Task 3 - Animated 2D Orbits" width="360"/></td>
-    <td><img src="assets/screenshots/task4.gif" alt="Task 4 - Animated 3D Orbits" width="360"/></td>
+    <td><img src="assets/animations/task3.gif" alt="Task 3 - Animated 2D Orbits" width="360"/></td>
+    <td><img src="assets/animations/task4.gif" alt="Task 4 - Animated 3D Orbits" width="360"/></td>
   </tr>
   <tr>
     <td align="center">Task 3 — Animated 2D Orbits</td>
     <td align="center">Task 4 — Animated 3D Orbits</td>
   </tr>
   <tr>
-    <td><img src="assets/screenshots/task5.gif" alt="Task 5 - Orbital Angle vs Time" width="360"/></td>
+    <td><img src="assets/animations/task5.gif" alt="Task 5 - Orbital Angle vs Time" width="360"/></td>
     <td><img src="assets/screenshots/task6.png" alt="Task 6 - Spirograph Patterns" width="360"/></td>
   </tr>
   <tr>
