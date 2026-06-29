@@ -10,15 +10,15 @@ Seven competition tasks are accessible from a central menu:
 
 | # | Task | Highlights |
 |---|---|---|
-| 1 | **Kepler's Third Law** | Plots T vs a³/² for all nine planets, confirming the linear relationship |
-| 2 | **Static 2D Orbits** | Elliptical orbits rendered from the polar ellipse equation, Sun at the focus |
-| 3 | **Animated 2D Orbits** | Real-time animation with Start / Stop / Resume / Reset controls |
-| 4 | **Animated 3D Orbits** | Extends Task 3 with true planetary inclinations and a speed modifier for outer planets |
+| 1 | **Kepler's Third Law** | Kepler's Third Law — T vs a³/² for all planets |
+| 2 | **Static 2D Orbits** | Static 2D elliptical orbits (inner & outer solar system) |
+| 3 | **Animated 2D Orbits** | Animated 2D orbits with Start / Stop / Resume / Reset |
+| 4 | **Animated 3D Orbits** | Animated 3D orbits with true orbital inclinations |
 | 5 | **Orbital Angle vs Time** | Numerically integrates Kepler's Second Law via Simpson's Rule, inverted with a cubic spline; interactive eccentricity slider |
-| 6 | **Spirograph Patterns** | Connecting lines between any two planets over user-defined orbits, producing synodic Lissajous patterns |
+| 6 | **Spirograph Patterns** | Connecting lines between any two planets over user-defined orbits, producing synodic patterns |
 | 7 | **Relative Orbits** | Re-centres the solar system on any chosen planet; available in both 2D and 3D |
 
-
+---
 ## Showcase
  
 <table>
@@ -55,22 +55,6 @@ Seven competition tasks are accessible from a central menu:
     <td></td>
   </tr>
 </table>
----
-
-## Features
-
-Seven competition tasks are accessible from a central menu:
-
-| # | Task | Highlights |
-|---|---|---|
-| 1 | **Kepler's Third Law** | Kepler's Third Law — T vs a³/² for all planets |
-| 2 | **Static 2D Orbits** | Static 2D elliptical orbits (inner & outer solar system) |
-| 3 | **Animated 2D Orbits** | Animated 2D orbits with Start / Stop / Resume / Reset |
-| 4 | **Animated 3D Orbits** | Animated 3D orbits with true orbital inclinations |
-| 5 | **Orbital Angle vs Time** | Numerically integrates Kepler's Second Law via Simpson's Rule, inverted with a cubic spline; interactive eccentricity slider |
-| 6 | **Spirograph Patterns** | Connecting lines between any two planets over user-defined orbits, producing synodic patterns |
-| 7 | **Relative Orbits** | Re-centres the solar system on any chosen planet; available in both 2D and 3D |
-
 ---
 
 ## Technical Overview
