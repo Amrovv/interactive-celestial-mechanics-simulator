@@ -1,5 +1,7 @@
 # Interactive Celestial Mechanics Simulator
 
+[![tests](https://github.com/Amrovv/interactive-celestial-mechanics-simulator/actions/workflows/tests.yml/badge.svg)](https://github.com/Amrovv/interactive-celestial-mechanics-simulator/actions/workflows/tests.yml)
+
 An interactive desktop application simulating planetary orbital mechanics, built for the British Physics Olympiad Computational Challenge 2023. Awarded Gold 🏆.
 
 All orbital mechanics are computed analytically using the polar equation of an ellipse, with no physics engine or third-party simulation library. The app was packaged with PyInstaller into a standalone .exe so it runs on any Windows machine without a Python installation.
