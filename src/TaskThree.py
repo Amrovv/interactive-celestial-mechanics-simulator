@@ -3,6 +3,21 @@ from matplotlib import animation
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from PlanetClasses import Planet
+from planets import PLANETS, INNER, OUTER
+
+
+def _config_for(names):
+    """Build the animation config for a list of planet names."""
+    return [
+        {
+            "name": name.capitalize(),
+            "period": PLANETS[name]["period"],
+            "axis": PLANETS[name]["au"],
+            "eccentricity": PLANETS[name]["ecc"],
+            "color": PLANETS[name]["color"],
+        }
+        for name in names
+    ]
 
 
 class BaseAnimatedOrbitCanvas(FigureCanvasQTAgg):
@@ -133,12 +148,7 @@ class PlotCanvasforTask3_Inner(BaseAnimatedOrbitCanvas):
         return np.arange(0, 3, 0.0025)
 
     def _get_planets_config(self):
-        return [
-            {"name": "Mercury", "period": 0.24, "axis": 0.387, "eccentricity": 0.2056, "color": "grey"},
-            {"name": "Venus", "period": 0.62, "axis": 0.723, "eccentricity": 0.0068, "color": "yellow"},
-            {"name": "Earth", "period": 1.00, "axis": 1.000, "eccentricity": 0.0167, "color": "blue"},
-            {"name": "Mars", "period": 1.88, "axis": 1.523, "eccentricity": 0.0934, "color": "red"}
-        ]
+        return _config_for(INNER)
 
     def plot_static_orbits(self):
         super().plot_static_orbits()
@@ -149,16 +159,10 @@ class PlotCanvasforTask3_Outer(BaseAnimatedOrbitCanvas):
     """Canvas handling animations for the Outer Planets."""
     
     def _get_time_array(self):
-        return np.arange(0, 3000, 0.25)
+        return np.arange(0, 500, 0.25)
 
     def _get_planets_config(self):
-        return [
-            {"name": "Jupiter", "period": 11.86, "axis": 5.20, "eccentricity": 0.048775, "color": "orange"},
-            {"name": "Saturn", "period": 29.63, "axis": 9.58, "eccentricity": 0.0555, "color": "yellow"},
-            {"name": "Uranus", "period": 84.75, "axis": 19.29, "eccentricity": 0.0472, "color": "cyan"},
-            {"name": "Neptune", "period": 166.34, "axis": 30.25, "eccentricity": 0.0086, "color": "blue"},
-            {"name": "Pluto", "period": 248.35, "axis": 39.51, "eccentricity": 0.25, "color": "brown"}
-        ]
+        return _config_for(OUTER)
 
     def plot_static_orbits(self):
         super().plot_static_orbits()

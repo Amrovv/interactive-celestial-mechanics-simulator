@@ -2,7 +2,8 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
-from distance import distance  
+from distance import distance
+from planets import PLANETS, INNER, OUTER, SUN_COLOR
 
 
 class BaseRelativeOrbitCanvas(FigureCanvasQTAgg):
@@ -48,10 +49,7 @@ class PlotCanvasForTask7(BaseRelativeOrbitCanvas):
 
         time = np.arange(0, years, 0.001)
 
-        inner_planets = ['mercury', 'venus', 'earth', 'mars']
-        orbiting_planets = inner_planets.copy() if central_planet in inner_planets else \
-                          ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto']
-
+        orbiting_planets = INNER.copy() if central_planet in INNER else OUTER.copy()
         orbiting_planets.remove(central_planet)
 
         # Plot relative orbits
@@ -65,8 +63,8 @@ class PlotCanvasForTask7(BaseRelativeOrbitCanvas):
 
         # Plot central planet (Sun reference) and fixed point
         central_x, central_y = self._get_positions(central_planet, time, planet_data)
-        self.ax.plot(central_x, central_y, 
-                    color=planet_data['sun']['color'], 
+        self.ax.plot(central_x, central_y,
+                    color=SUN_COLOR,
                     label='Sun Orbit')
 
         self.ax.scatter(0, 0, color=planet_data[central_planet]['color'], 
@@ -75,19 +73,8 @@ class PlotCanvasForTask7(BaseRelativeOrbitCanvas):
         self._finalize_plot(f"Orbits relative to {central_planet.capitalize()}", "2D")
 
     def _get_planet_data(self):
-        """Centralized planet parameters."""
-        return {
-            'mercury': {'au': 0.387, 'ecc': 0.2056, 'period': 0.24,  'color': 'grey'},
-            'venus':   {'au': 0.723, 'ecc': 0.0068, 'period': 0.62,  'color': 'yellow'},
-            'earth':   {'au': 1.000, 'ecc': 0.0167, 'period': 1.00,  'color': 'blue'},
-            'mars':    {'au': 1.523, 'ecc': 0.0934, 'period': 1.88,  'color': 'red'},
-            'jupiter': {'au': 5.20,  'ecc': 0.049,  'period': 11.86, 'color': 'orange'},
-            'saturn':  {'au': 9.58,  'ecc': 0.056,  'period': 29.46, 'color': 'yellow'},
-            'uranus':  {'au': 19.29, 'ecc': 0.046,  'period': 84.01, 'color': 'cyan'},
-            'neptune': {'au': 30.25, 'ecc': 0.010,  'period': 164.8, 'color': 'blue'},
-            'pluto':   {'au': 39.51, 'ecc': 0.2488, 'period': 248.09,'color': 'brown'},
-            'sun':     {'color': 'orange'}
-        }
+        """Shared planet parameters."""
+        return PLANETS
 
     def _get_positions(self, planet: str, time: np.ndarray, planet_data: dict):
         """Calculate absolute (x, y) positions."""
@@ -158,9 +145,7 @@ class PlotCanvasForTask7_3D(BaseRelativeOrbitCanvas):
         dt = 0.001 if central_planet in ['mercury', 'venus', 'earth', 'mars'] else 0.01
         time = np.arange(0, years, dt)
 
-        inner = ['mercury', 'venus', 'earth', 'mars']
-        orbiting_planets = inner.copy() if central_planet in inner else \
-                          ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto']
+        orbiting_planets = INNER.copy() if central_planet in INNER else OUTER.copy()
         orbiting_planets.remove(central_planet)
 
         # Plot relative orbits
@@ -174,8 +159,8 @@ class PlotCanvasForTask7_3D(BaseRelativeOrbitCanvas):
 
         # Plot Sun's orbit relative to central planet
         sx, sy, sz = self._get_positions_3d(central_planet, time, planet_data)
-        self.ax.plot(sx, sy, sz, 
-                    color=planet_data['sun']['color'], 
+        self.ax.plot(sx, sy, sz,
+                    color=SUN_COLOR,
                     label='Sun Orbit')
 
         # Fixed central planet marker
@@ -185,19 +170,8 @@ class PlotCanvasForTask7_3D(BaseRelativeOrbitCanvas):
         self._finalize_3d_plot(f"3D Orbits relative to {central_planet.capitalize()}")
 
     def _get_planet_data_3d(self):
-        """Planet data including inclination (in degrees)."""
-        return {
-            'mercury': {'au': 0.387, 'ecc': 0.2056, 'period': 0.24,  'inc': 7.0,   'color': 'grey'},
-            'venus':   {'au': 0.723, 'ecc': 0.0068, 'period': 0.62,  'inc': 3.4,   'color': 'yellow'},
-            'earth':   {'au': 1.000, 'ecc': 0.0167, 'period': 1.00,  'inc': 0.0,   'color': 'blue'},
-            'mars':    {'au': 1.523, 'ecc': 0.0934, 'period': 1.88,  'inc': 1.8,   'color': 'red'},
-            'jupiter': {'au': 5.20,  'ecc': 0.049,  'period': 11.86, 'inc': 1.3,   'color': 'orange'},
-            'saturn':  {'au': 9.58,  'ecc': 0.056,  'period': 29.46, 'inc': 2.5,   'color': 'yellow'},
-            'uranus':  {'au': 19.29, 'ecc': 0.046,  'period': 84.01, 'inc': 0.8,   'color': 'cyan'},
-            'neptune': {'au': 30.25, 'ecc': 0.010,  'period': 164.8, 'inc': 1.8,   'color': 'blue'},
-            'pluto':   {'au': 39.51, 'ecc': 0.2488, 'period': 248.09,'inc': 17.2,  'color': 'brown'},
-            'sun':     {'color': 'orange'}
-        }
+        """Shared planet parameters (inclination is included, in degrees)."""
+        return PLANETS
 
     def _get_positions_3d(self, planet: str, time: np.ndarray, planet_data: dict):
         """Calculate 3D positions with inclination."""

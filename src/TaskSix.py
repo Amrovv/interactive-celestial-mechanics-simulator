@@ -3,6 +3,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 from distance import distance
+from planets import PLANETS
 
 
 class PlotCanvasForTask6(FigureCanvasQTAgg):
@@ -38,18 +39,7 @@ class PlotCanvasForTask6(FigureCanvasQTAgg):
         """Plot spirograph-style visualization showing orbits and connecting lines."""
         self.ax.clear()
 
-        # Planet database
-        planet_data = {
-            'mercury': {'au': 0.387, 'period': 0.24,  'ecc': 0.2056, 'color': 'grey'},
-            'venus':   {'au': 0.723, 'period': 0.62,  'ecc': 0.0068, 'color': 'yellow'},
-            'earth':   {'au': 1.000, 'period': 1.00,  'ecc': 0.0167, 'color': 'blue'},
-            'mars':    {'au': 1.523, 'period': 1.88,  'ecc': 0.0934, 'color': 'red'},
-            'jupiter': {'au': 5.20,  'period': 11.86, 'ecc': 0.0484, 'color': 'orange'},
-            'saturn':  {'au': 9.58,  'period': 29.46, 'ecc': 0.0542, 'color': 'yellow'},
-            'uranus':  {'au': 19.29, 'period': 84.01, 'ecc': 0.0472, 'color': 'cyan'},
-            'neptune': {'au': 30.25, 'period': 164.79,'ecc': 0.0086, 'color': 'blue'},
-            'pluto':   {'au': 39.51, 'period': 248.59,'ecc': 0.2488, 'color': 'brown'},
-        }
+        planet_data = PLANETS
 
         if planet1 not in planet_data or planet2 not in planet_data:
             raise ValueError(f"Invalid planet name(s). Available: {list(planet_data.keys())}")

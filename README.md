@@ -73,7 +73,7 @@ r(θ) = a(1 − e²) / (1 − e·cos θ)
 x = r·cos(θ)·cos(i),   y = r·sin(θ),   z = r·cos(θ)·sin(i)
 ```
 
-The codebase uses OOP inheritance throughout — each task's canvas inherits from a shared base class (`FigureCanvasQTAgg`) that handles dark-theme styling, axis setup, and animation lifecycle, keeping task-specific code focused purely on physics logic.
+Each task lives in its own module with a Matplotlib canvas class (subclassing Matplotlib's `FigureCanvasQTAgg`). Where a task comes in inner/outer or 2D/3D variants, those variants share a small per-task base class holding the common dark-theme styling and animation lifecycle, so each variant only defines its own set of planets. All the planet data (semi-major axis, period, eccentricity, inclination) lives in a single `planets.py`.
 
 **Stack:** Python · PyQt5 · Matplotlib · NumPy · SciPy · PyInstaller
 
@@ -88,8 +88,8 @@ Download the latest `.exe` from the [Releases](../../releases) page and run it d
 ### Option B — Run from Source
 
 ```bash
-git clone https://github.com/<your-username>/interactive-celestial-mechanics-simulator.git
-cd bpho-solar-system-2023
+git clone https://github.com/Amrovv/interactive-celestial-mechanics-simulator.git
+cd interactive-celestial-mechanics-simulator
 pip install -r requirements.txt
 python src/App.py
 ```
@@ -110,20 +110,17 @@ scipy>=1.7
 interactive-celestial-mechanics-simulator/
 ├── src/
 │   ├── App.py              # Main window, navigation, and event routing
+│   ├── planets.py          # Shared planet data (distance, period, eccentricity, inclination)
 │   ├── distance.py         # Orbital distance formula r(a, θ, e)
 │   ├── PlanetClasses.py    # Planet and Planet3D coordinate generators
-│   ├── TaskOne.py         
-│   ├── TaskTwo.py         
-│   ├── TaskThree.py        
-│   ├── TaskFour.py         
-│   ├── TaskFive.py        
-│   ├── TaskSix.py          
-│   └── TaskSeven.py        
-├── images/
-│   ├── inner.jpg
-│   └── outer.png
+│   ├── TaskOne.py … TaskSeven.py   # One module per competition task
+│   └── images/
+│       ├── inner.jpg
+│       └── outer.png
+├── tests/
+│   └── test_orbits.py      # Basic checks on the orbit maths
 ├── assets/
-│   └── screenshots/        # README images
+│   ├── screenshots/        # README images
 │   └── animations/         # README GIFs
 ├── requirements.txt
 └── README.md
