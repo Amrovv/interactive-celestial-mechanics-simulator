@@ -160,12 +160,11 @@ class PlotCanvas3DforInner(Base3DPlanetCanvas):
 
     def _calculate_orbit(self, Distance: float, ecc: float, inc: float):
         """Calculate 3D orbital path points."""
-        x, y, z = [], [], []
-        for theta in np.radians(range(1000)):
-            r = distance(Distance=Distance, theta=theta, eccentricity=ecc)
-            x.append((r * np.cos(theta)) * np.cos(inc))
-            y.append(r * np.sin(theta))
-            z.append((r * np.cos(theta)) * np.sin(inc))
+        theta = np.linspace(0, 2 * np.pi, 1000)
+        r = distance(Distance=Distance, theta=theta, eccentricity=ecc)
+        x = r * np.cos(theta) * np.cos(inc)
+        y = r * np.sin(theta)
+        z = r * np.cos(theta) * np.sin(inc)
         return x, y, z
 
     def _finalize_plot(self, title: str):
@@ -235,12 +234,11 @@ class PlotCanvas3DforOuter(Base3DPlanetCanvas):
 
     def _calculate_orbit(self, Distance: float, ecc: float, inc: float):
         """Calculate 3D orbital path points."""
-        x, y, z = [], [], []
-        for theta in np.radians(range(1000)):
-            r = distance(Distance=Distance, theta=theta, eccentricity=ecc)
-            x.append((r * np.cos(theta)) * np.cos(inc))
-            y.append(r * np.sin(theta))
-            z.append((r * np.cos(theta)) * np.sin(inc))
+        theta = np.linspace(0, 2 * np.pi, 1000)
+        r = distance(Distance=Distance, theta=theta, eccentricity=ecc)
+        x = r * np.cos(theta) * np.cos(inc)
+        y = r * np.sin(theta)
+        z = r * np.cos(theta) * np.sin(inc)
         return x, y, z
 
     def _finalize_plot(self, title: str):

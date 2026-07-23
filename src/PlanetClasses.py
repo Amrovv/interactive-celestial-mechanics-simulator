@@ -27,27 +27,17 @@ class Planet3D:
             inclination: Orbital inclination in radians
             
         Returns:
-            Tuple of (x_coords, y_coords, z_coords) lists
+            Tuple of (x_coords, y_coords, z_coords) arrays
         """
         theta = (2 * np.pi * self.time) / self.period
+        r = distance(Distance, theta, eccentricity)
 
-        x_coordinate = []
-        y_coordinate = []
-        z_coordinate = []
+        # Apply inclination to x and z components
+        x = r * np.cos(theta) * np.cos(inclination)
+        y = r * np.sin(theta)
+        z = r * np.cos(theta) * np.sin(inclination)
 
-        for i in range(len(self.time)):
-            r = distance(Distance, theta[i], eccentricity)
-
-            # Apply inclination to x and z components
-            x = r * np.cos(theta[i]) * np.cos(inclination)
-            y = r * np.sin(theta[i])
-            z = r * np.cos(theta[i]) * np.sin(inclination)
-
-            x_coordinate.append(x)
-            y_coordinate.append(y)
-            z_coordinate.append(z)
-
-        return x_coordinate, y_coordinate, z_coordinate
+        return x, y, z
 
 
 class Planet:
@@ -73,20 +63,12 @@ class Planet:
             eccentricity: Orbital eccentricity (0 = circular)
             
         Returns:
-            Tuple of (x_coords, y_coords) lists
+            Tuple of (x_coords, y_coords) arrays
         """
         theta = (2 * np.pi * self.time) / self.period
+        r = distance(Distance, theta, eccentricity)
 
-        x_coordinate = []
-        y_coordinate = []
+        x = r * np.cos(theta)
+        y = r * np.sin(theta)
 
-        for i in range(len(self.time)):
-            r = distance(Distance, theta[i], eccentricity)
-
-            x = r * np.cos(theta[i])
-            y = r * np.sin(theta[i])
-
-            x_coordinate.append(x)
-            y_coordinate.append(y)
-
-        return x_coordinate, y_coordinate
+        return x, y
