@@ -2,6 +2,8 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
+from planets import PLANETS, INNER, OUTER
+
 
 class BasePlanetOrbitCanvas(FigureCanvasQTAgg):
     """Base canvas containing shared logic for plotting planetary orbits using Keplerian mechanics."""
@@ -57,19 +59,12 @@ class PlotCanvasForTask2_Inner(BasePlanetOrbitCanvas):
     
     def plot_data(self):
         self.ax.clear()
-        
-        # Configuration: (semi_major_axis, eccentricity, color, label)
-        inner_planets = [
-            (0.387, 0.2056, "grey", "Mercury"),
-            (0.723, 0.0068, "yellow", "Venus"),
-            (1.000, 0.0167, "blue", "Earth"),
-            (1.523, 0.0934, "red", "Mars")
-        ]
-        
-        for axis, ecc, color, name in inner_planets:
-            x, y = self._generate_orbit_coords(axis, ecc)
-            self.ax.plot(x, y, color=color, label=name)
-            
+
+        for name in INNER:
+            p = PLANETS[name]
+            x, y = self._generate_orbit_coords(p['au'], p['ecc'])
+            self.ax.plot(x, y, color=p['color'], label=name.capitalize())
+
         self._apply_common_plot_settings("Inner Planets Orbit")
 
 
@@ -78,18 +73,10 @@ class PlotCanvasForTask2_Outer(BasePlanetOrbitCanvas):
     
     def plot_data(self):
         self.ax.clear()
-        
-        # Configuration: (semi_major_axis, eccentricity, color, label)
-        outer_planets = [
-            (5.20, 0.048775, "orange", "Jupiter"),
-            (9.58, 0.0555, "red", "Saturn"),
-            (19.29, 0.0472, "cyan", "Uranus"),
-            (30.25, 0.0086, "blue", "Neptune"),
-            (39.51, 0.25, "brown", "Pluto")
-        ]
-        
-        for axis, ecc, color, name in outer_planets:
-            x, y = self._generate_orbit_coords(axis, ecc)
-            self.ax.plot(x, y, linestyle='-', color=color, label=name)
-            
+
+        for name in OUTER:
+            p = PLANETS[name]
+            x, y = self._generate_orbit_coords(p['au'], p['ecc'])
+            self.ax.plot(x, y, color=p['color'], label=name.capitalize())
+
         self._apply_common_plot_settings("Outer Planets Orbit")

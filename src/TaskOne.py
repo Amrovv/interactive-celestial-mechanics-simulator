@@ -1,6 +1,8 @@
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
+from planets import PLANETS
+
 class KeplerPlotCanvas(FigureCanvasQTAgg):
     """A Qt5-compatible canvas for plotting Kepler's Third Law."""
     
@@ -13,23 +15,10 @@ class KeplerPlotCanvas(FigureCanvasQTAgg):
         self.plot_data()  
 
     def plot_data(self):
-        # Planetary data: Semi-major axis (AU) and Orbital Period (Years)
-        # Pairs are sorted by distance from the Sun to ensure the line plot connects smoothly
-        planetary_data = [
-            (0.387, 0.24),    # Mercury
-            (0.723, 0.62),    # Venus
-            (1.000, 1.00),    # Earth
-            (1.523, 1.88),    # Mars
-            (5.200, 11.86),   # Jupiter
-            (9.580, 29.63),   # Saturn
-            (19.290, 84.75),  # Uranus
-            (30.250, 166.34), # Neptune
-            (39.510, 248.35)  # Pluto
-        ]
-        
-        # Unpack sorted data
-        semi_major_axes = [data[0] for data in planetary_data]
-        orbital_periods = [data[1] for data in planetary_data]
+        # Semi-major axis (AU) and orbital period (years), in order from the
+        # Sun outwards so the line plot connects smoothly.
+        semi_major_axes = [p['au'] for p in PLANETS.values()]
+        orbital_periods = [p['period'] for p in PLANETS.values()]
         
         # Apply Kepler's 3rd Law relationship: T^2 proportional to a^3 (or T = a^(3/2))
         transformed_axes = [axis ** (3/2) for axis in semi_major_axes]
