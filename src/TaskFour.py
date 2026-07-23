@@ -182,7 +182,7 @@ class PlotCanvas3DforOuter(Base3DPlanetCanvas):
         # Override Speed for Outer Planets Only (Higher value = Slower)
         super().__init__(parent, width, height, dpi, speed_modifier=1)
         
-        self.time = np.arange(0, 3000, 0.0025)  # Coarser resolution for outer planets
+        self.time = np.arange(0, 500, 0.25)  # Fewer points; outer orbits are slow so this is plenty
         
         # Planet configurations: (semi_major_axis, eccentricity, inclination)
         self.planet_configs = {

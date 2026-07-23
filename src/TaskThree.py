@@ -149,7 +149,7 @@ class PlotCanvasforTask3_Outer(BaseAnimatedOrbitCanvas):
     """Canvas handling animations for the Outer Planets."""
     
     def _get_time_array(self):
-        return np.arange(0, 3000, 0.25)
+        return np.arange(0, 500, 0.25)
 
     def _get_planets_config(self):
         return [
